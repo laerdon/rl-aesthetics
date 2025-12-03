@@ -3,8 +3,6 @@ from dataset.heuristics import *
 
 # want to define a loss function
 
-CANVAS_SIZE = (400, 400)
-
 def compute_loss(canvas, dims, predicted, target):
     # want to check both heuristics and MSE from the target output
 
