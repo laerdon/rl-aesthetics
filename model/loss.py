@@ -3,21 +3,37 @@ from dataset.heuristics import *
 
 # want to define a loss function
 
+# model/loss.py
+from typing import *
+import torch
+from dataset.heuristics import *
+
 def compute_loss(canvas, dims, predicted, target):
-    # want to check both heuristics and MSE from the target output
-
-    """    
-    :param predicted: [(x,y)]
-    :param target: [(x,y)]
     """
-    mse_loss = 0.0
-    for (p, t) in zip(predicted, target):
-        mse_loss += (p[0] - t[0]) ** 2 + (p[1] - t[1]) ** 2
-    mse_loss /= len(predicted)
-
-    if not chk_within_bounds(canvas, dims, predicted):
-        mse_loss += 1000.0  # large penalty for going out of bounds
+    dims: [batch, num_dims] tensor
+    predicted: [batch, num_coords] tensor  
+    target: [batch, num_coords] tensor
+    """
+    # mse loss works on batched tensors
+    mse_loss = torch.nn.functional.mse_loss(predicted, target)
     
-    mse_loss += quantify_overlap(canvas, dims, predicted)
-
-    return mse_loss
+    # heuristic penalties need to loop over batch
+    batch_size = dims.shape[0]
+    penalty = 0.0
+    
+    for b in range(batch_size):
+        # extract single sample
+        dims_sample = dims[b, 2:]
+        pred_sample = predicted[b] # predicted doesn't have the canvas dimensions
+        
+        # check bounds for this sample
+        if not chk_within_bounds(canvas, dims_sample, pred_sample):
+            penalty += 50.0
+        
+        # add overlap penalty
+        penalty += quantify_overlap(canvas, dims_sample, pred_sample)
+    
+    # average penalty over batch
+    penalty /= batch_size
+    
+    return mse_loss + penalty
