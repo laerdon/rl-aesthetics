@@ -34,7 +34,7 @@ class PlacementDataset(Dataset):
         flat_boxes = torch.cat([canvas_tensor, flat_boxes], dim=0)
 
         flat_coords = torch.tensor(
-            [v for pair in coords for v in pair],
+            [v / CANVAS[0] for pair in coords for v in pair],
             dtype=torch.float32
         )
 
